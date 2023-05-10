@@ -1,0 +1,36 @@
+import yfinance as yf
+import numpy as np
+from hmmlearn.hmm import GaussianHMM
+import matplotlib.pyplot as plt
+
+# Load data
+ticker = "TCS.NS"
+start_date = "2010-01-01"
+end_date = "2022-01-01"
+df = yf.download(ticker, start=start_date, end=end_date)
+
+# Extract closing prices
+closing_prices = np.array(df["Close"]).reshape(-1, 1)
+
+# Define number of hidden states
+n_states = 4
+model = GaussianHMM(n_components=n_states, covariance_type="diag")
+
+# Train model on data
+model.fit(closing_prices)
+
+# Predict hidden states
+hidden_states = model.predict(closing_prices)
+
+# Predict stock prices
+predicted_prices = []
+for i in range(len(closing_prices)):
+    current_state = hidden_states[i]
+    mean = model.means_[current_state][0]
+    predicted_prices.append(mean)
+
+# Plot actual and predicted prices
+plt.plot(df.index, closing_prices, label="Actual")
+plt.plot(df.index, predicted_prices, label="Predicted")
+plt.legend()
+plt.show()
